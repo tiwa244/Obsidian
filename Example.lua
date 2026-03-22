@@ -575,6 +575,7 @@ LeftGroupBox:AddLabel("Keybind"):AddKeyPicker("KeyPicker", {
 	-- Occurs when the keybind is clicked, Value is `true`/`false`
 	Callback = function(Value)
 		print("[cb] Keybind clicked!", Value)
+		print("yes")
 	end,
 
 	-- Occurs when the keybind itself is changed, `NewKey` is a KeyCode Enum OR a UserInputType Enum, `NewModifiers` is a table with KeyCode Enum(s) or nil
