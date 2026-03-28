@@ -412,7 +412,7 @@ do
             self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
         end)
 
-        groupbox:AddDivider("Config")
+        groupbox:AddDivider("Save")
 
         groupbox:AddDropdown(
             "ThemeManager_CustomThemeList",
