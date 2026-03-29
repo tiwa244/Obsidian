@@ -4809,11 +4809,13 @@ do
 
             local Count = 0
             for _, Value in Values do
-                if SearchBox and not tostring(Value):lower():match(SearchBox.Text:lower()) then
+                local FormattedValue = tostring(Info.FormatListValue and Info.FormatListValue(Value) or Value)
+                if SearchBox and not FormattedValue:lower():match(SearchBox.Text:lower()) then
                     continue
                 end
 
                 Count += 1
+
                 local IsDisabled = table.find(DisabledValues, Value)
                 local Table = {}
 
@@ -4822,7 +4824,7 @@ do
                     BackgroundTransparency = 1,
                     LayoutOrder = IsDisabled and 1 or 0,
                     Size = UDim2.new(1, 0, 0, 21),
-                    Text = tostring(Value),
+                    Text = FormattedValue,
                     TextSize = 14,
                     TextTransparency = 0.5,
                     TextXAlignment = Enum.TextXAlignment.Left,
