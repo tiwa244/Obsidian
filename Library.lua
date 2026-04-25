@@ -236,6 +236,7 @@ local Library = {
     Scales = {},
 
     ImageManager = CustomImageManager,
+    ShowCursorBinding = string.sub(tostring({}), 10),
 }
 
 if RunService:IsStudio() then
@@ -317,7 +318,10 @@ local Templates = {
         ShowCustomCursor = true,
         Font = Enum.Font.Code,
         ToggleKeybind = Enum.KeyCode.RightControl,
+        
+        ShowMobileButtons = true,
         MobileButtonsSide = "Left",
+
         UnlockMouseWhileOpen = true,
 
         EnableSidebarResize = false,
@@ -1028,8 +1032,7 @@ function Library:GiveSignal(Connection: RBXScriptConnection | RBXScriptSignal)
 end
 
 function IsValidCustomIcon(Icon: string)
-    return typeof(Icon) == "string"
-        and (Icon:match("rbxasset") or Icon:match("roblox%.com/asset/%?id=") or Icon:match("rbxthumb://type="))
+    return typeof(Icon) == "string" and (Icon:match("rbxasset") or Icon:match("roblox%.com/asset/%?id=") or Icon:match("rbxthumb://type="))
 end
 
 type Icon = {
@@ -1064,6 +1067,14 @@ function Library:GetIcon(IconName: string)
 end
 
 function Library:GetCustomIcon(IconName: string): any
+    if not IconName then
+        return nil
+    end
+
+    if tonumber(IconName) then
+        IconName = string.format("rbxassetid://%s", tostring(IconName))
+    end
+
     local CustomIcon = IsValidCustomIcon(IconName)
     if CustomIcon then
         return {
@@ -1079,15 +1090,6 @@ function Library:GetCustomIcon(IconName: string): any
         return LucideIcon
     end
 
-    if tonumber(IconName) then
-        return {
-            Url = string.format("rbxassetid://%s", tostring(IconName)),
-            ImageRectOffset = Vector2.zero,
-            ImageRectSize = Vector2.zero,
-            Custom = true,
-        }
-    end
-    
     return nil
 end
 
@@ -3341,10 +3343,16 @@ do
 
         Groupbox:Resize()
 
-        table.insert(Groupbox.Elements, {
+        local Divider = {
             Holder = Holder,
+            Text = Text,
+            MarginTop = MarginTop,
+            MarginBottom = MarginBottom,
             Type = "Divider",
-        })
+        }
+
+        table.insert(Groupbox.Elements, Divider)
+        return Divider
     end
 
     function Funcs:AddLabel(...)
@@ -3787,6 +3795,7 @@ do
             Visible = Info.Visible,
             Addons = {},
 
+            Variant = "Checkbox",
             Type = "Toggle",
         }
 
@@ -3993,6 +4002,7 @@ do
             Visible = Info.Visible,
             Addons = {},
 
+            Variant = "Switch",
             Type = "Toggle",
         }
 
@@ -4399,6 +4409,7 @@ do
             Suffix = Info.Suffix,
             Compact = Info.Compact,
             Rounding = Info.Rounding,
+            HideMax = Info.HideMax,
 
             Tooltip = Info.Tooltip,
             DisabledTooltip = Info.DisabledTooltip,
@@ -7085,6 +7096,7 @@ function Library:CreateWindow(WindowInfo)
             Groupboxes = {},
             Tabboxes = {},
             DependencyGroupboxes = {},
+            Description = Description,
             Sides = {
                 TabLeft,
                 TabRight,
@@ -7797,6 +7809,7 @@ function Library:CreateWindow(WindowInfo)
         --// Tab Table \\--
         local Tab = {
             Elements = {},
+            Description = Description,
             IsKeyTab = true,
         }
 
@@ -8433,9 +8446,15 @@ function Library:CreateWindow(WindowInfo)
         return Dialog
     end
 
-    function Library:Toggle(Value: boolean?)
-        if Library.ActiveLoading and (Value == true or (Value == nil and not Library.Toggled)) then
-            return
+    function Window:Toggle(Value: boolean?)
+        if Library.ActiveLoading then
+            if Value == true then
+                return
+            end
+
+            if not Library.Toggled then
+                return
+            end
         end
 
         if typeof(Value) == "boolean" then
@@ -8452,10 +8471,11 @@ function Library:CreateWindow(WindowInfo)
 
         if Library.Toggled and not Library.IsMobile then
             local OldMouseIconEnabled = UserInputService.MouseIconEnabled
+            local ShowCursorBinding = Library.ShowCursorBinding
             pcall(function()
-                RunService:UnbindFromRenderStep("ShowCursor")
+                RunService:UnbindFromRenderStep(ShowCursorBinding)
             end)
-            RunService:BindToRenderStep("ShowCursor", Enum.RenderPriority.Last.Value, function()
+            RunService:BindToRenderStep(ShowCursorBinding, Enum.RenderPriority.Last.Value, function()
                 UserInputService.MouseIconEnabled = not Library.ShowCustomCursor
 
                 Cursor.Position = UDim2.fromOffset(Mouse.X, Mouse.Y)
@@ -8464,7 +8484,7 @@ function Library:CreateWindow(WindowInfo)
                 if not (Library.Toggled and ScreenGui and ScreenGui.Parent) then
                     UserInputService.MouseIconEnabled = OldMouseIconEnabled
                     Cursor.Visible = false
-                    RunService:UnbindFromRenderStep("ShowCursor")
+                    RunService:UnbindFromRenderStep(ShowCursorBinding)
                 end
             end)
         elseif not Library.Toggled then
@@ -8479,6 +8499,10 @@ function Library:CreateWindow(WindowInfo)
                 end
             end
         end
+    end
+
+    function Library:Toggle(Value: boolean?)
+        return Window:Toggle(Value)
     end
 
     if WindowInfo.EnableSidebarResize then
@@ -8591,6 +8615,11 @@ function Library:CreateWindow(WindowInfo)
             LockButton.Button.AnchorPoint = Vector2.new(1, 0)
         else
             LockButton.Button.Position = UDim2.fromOffset(6, 46)
+        end
+
+        if WindowInfo.ShowMobileButtons == false then
+            ToggleButton.Button.Visible = false
+            LockButton.Button.Visible = false
         end
     end
 
